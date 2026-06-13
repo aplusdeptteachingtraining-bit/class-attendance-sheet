@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>暑假點名表產生器</title>
+<title>點名表產生器</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -12,277 +12,181 @@
     --accent: #2d6a9f;
     --accent-light: #e8f0f8;
     --accent-mid: #5a9fd4;
-    --holiday: #f7ede8;
-    --holiday-border: #d4836a;
-    --sat: #edf3f9;
     --grid-line: #c8d4e0;
     --muted: #6b7c8d;
     --success: #2a7a4b;
     --warn: #b05a00;
+    --holiday-bg: #f7ede8;
+    --holiday-bd: #d4836a;
+    --sat-bg: #edf3f9;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans TC','Microsoft JhengHei',sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
 
-  body {
-    font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
-    background: var(--paper);
-    color: var(--ink);
-    min-height: 100vh;
-  }
-
-  /* ── Header ── */
   header {
-    background: var(--ink);
-    color: #fff;
-    padding: 20px 32px;
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    background: var(--ink); color: #fff;
+    padding: 18px 28px; display: flex; align-items: center; gap: 14px;
   }
   .logo-mark {
-    width: 40px; height: 40px;
-    background: var(--accent-mid);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 900; color: #fff;
-    flex-shrink: 0;
+    width: 38px; height: 38px; background: var(--accent-mid);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: #fff; flex-shrink: 0;
   }
-  header h1 { font-size: 18px; font-weight: 700; letter-spacing: 2px; }
-  header p  { font-size: 12px; color: #aac4df; letter-spacing: 1px; margin-top: 2px; }
+  header h1 { font-size: 17px; font-weight: 700; letter-spacing: 2px; }
+  header p  { font-size: 11px; color: #aac4df; letter-spacing: 1px; margin-top: 2px; }
 
-  /* ── Main Layout ── */
-  .app-shell {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    min-height: calc(100vh - 80px);
-  }
+  .app-shell { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 74px); }
 
-  /* ── Sidebar ── */
   aside {
-    background: #fff;
-    border-right: 1px solid #dde5ed;
-    padding: 24px 20px;
-    display: flex; flex-direction: column; gap: 24px;
+    background: #fff; border-right: 1px solid #dde5ed;
+    padding: 20px 16px; display: flex; flex-direction: column; gap: 20px;
+    overflow-y: auto;
   }
   .panel-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 2px;
-    color: var(--muted); text-transform: uppercase;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #eee;
+    font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--muted);
+    text-transform: uppercase; padding-bottom: 7px; border-bottom: 1px solid #eee;
   }
-  .field-group { display: flex; flex-direction: column; gap: 6px; }
-  label { font-size: 13px; font-weight: 600; color: var(--ink); }
-  input[type="text"], input[type="number"], select, textarea {
-    border: 1.5px solid #d0dbe6;
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 13px;
-    font-family: inherit;
-    color: var(--ink);
-    background: #fafcff;
+  .field-group { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 12px; font-weight: 600; color: var(--ink); }
+  input[type="text"], select, textarea {
+    border: 1.5px solid #d0dbe6; border-radius: 6px;
+    padding: 7px 9px; font-size: 12px; font-family: inherit;
+    color: var(--ink); background: #fafcff; width: 100%;
     transition: border-color .15s;
-    width: 100%;
   }
-  input:focus, select:focus, textarea:focus {
-    outline: none; border-color: var(--accent);
-  }
-  textarea { resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 100px; }
+  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 
-  .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  /* Upload Zone */
+  /* Upload */
   .upload-zone {
-    border: 2px dashed #c0d0e0;
-    border-radius: 8px;
-    padding: 16px;
-    text-align: center;
-    cursor: pointer;
-    transition: all .2s;
-    background: #fafcff;
+    border: 2px dashed #c0d0e0; border-radius: 8px;
+    padding: 14px; text-align: center; cursor: pointer;
+    transition: all .2s; background: #fafcff;
   }
   .upload-zone:hover { border-color: var(--accent); background: var(--accent-light); }
   .upload-zone.has-file { border-color: var(--success); background: #eaf7ef; }
-  .upload-zone svg { margin-bottom: 8px; }
-  .upload-zone p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .upload-zone p { font-size: 11px; color: var(--muted); line-height: 1.5; margin-top: 6px; }
   .upload-zone .file-name { font-size: 12px; font-weight: 600; color: var(--success); }
   #fileInput { display: none; }
 
+  /* Paste area */
+  .paste-hint { font-size: 11px; color: var(--muted); margin-bottom: 4px; line-height: 1.5; }
+  .col-map { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; margin-bottom: 6px; }
+  .col-badge {
+    background: var(--accent-light); border: 1px solid #c0d8f0;
+    border-radius: 4px; padding: 3px 2px; text-align: center;
+    font-size: 9px; color: var(--accent); font-weight: 700;
+  }
+
   /* Buttons */
   .btn {
-    border: none; border-radius: 8px;
-    padding: 11px 16px;
-    font-size: 13px; font-weight: 700;
-    cursor: pointer; font-family: inherit;
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    transition: all .15s;
-    width: 100%;
+    border: none; border-radius: 7px; padding: 10px 14px;
+    font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all .15s; width: 100%;
   }
   .btn-primary   { background: var(--accent); color: #fff; }
   .btn-primary:hover { background: #1f5280; }
-  .btn-secondary { background: #e8eff7; color: var(--accent); }
-  .btn-secondary:hover { background: #d0e2f3; }
   .btn-pdf       { background: #1a1a2e; color: #fff; }
   .btn-pdf:hover { background: #0d0d1c; }
-  .btn:disabled  { opacity: .45; cursor: not-allowed; }
+  .btn-secondary { background: #e8eff7; color: var(--accent); }
+  .btn-secondary:hover { background: #d0e2f3; }
+  .btn:disabled  { opacity: .4; cursor: not-allowed; }
 
-  /* Legend */
-  .legend { display: flex; flex-wrap: wrap; gap: 8px; }
-  .legend-item {
-    display: flex; align-items: center; gap: 5px;
-    font-size: 11px; color: var(--muted);
-  }
-  .legend-dot {
-    width: 12px; height: 12px; border-radius: 3px;
-  }
-  .dot-workday  { background: #fff; border: 1.5px solid var(--grid-line); }
-  .dot-sat      { background: var(--sat); border: 1.5px solid var(--grid-line); }
-  .dot-holiday  { background: var(--holiday); border: 1.5px solid var(--holiday-border); }
-  .dot-leave    { background: #fef9ec; border: 1.5px solid #e8c73a; }
-
-  /* Status Bar */
+  /* Status */
   .status-bar {
-    background: #e8f0f8; border-radius: 6px;
-    padding: 8px 12px;
-    font-size: 12px; color: var(--accent);
-    display: flex; align-items: center; gap: 6px;
+    background: #e8f0f8; border-radius: 6px; padding: 7px 10px;
+    font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 5px;
   }
   .status-bar.loading { background: #fff8e6; color: var(--warn); }
   .status-bar.error   { background: #ffeaea; color: #c0392b; }
+  .status-bar.ok      { background: #eaf7ef; color: var(--success); }
 
-  /* ── Preview Panel ── */
-  main {
-    padding: 28px;
-    overflow-x: auto;
-  }
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--muted); }
+  .legend-dot { width: 11px; height: 11px; border-radius: 3px; }
+  .dot-work { background:#fff; border:1.5px solid var(--grid-line); }
+  .dot-sat  { background:var(--sat-bg); border:1.5px solid var(--grid-line); }
+  .dot-hol  { background:var(--holiday-bg); border:1.5px solid var(--holiday-bd); }
+
+  /* Main */
+  main { padding: 24px; overflow-x: auto; }
   .preview-placeholder {
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    height: 100%;
-    color: #b0bec8;
-    gap: 12px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 100%; color: #b0bec8; gap: 10px;
   }
-  .preview-placeholder svg { opacity: .35; }
-  .preview-placeholder p { font-size: 14px; }
+  .preview-placeholder p { font-size: 13px; }
 
-  /* ── Attendance Table ── */
+  /* Sheet */
   .sheet-wrapper {
-    background: #fff;
-    border: 1px solid #dde5ed;
-    border-radius: 10px;
-    padding: 24px;
-    min-width: 600px;
-    box-shadow: 0 2px 12px rgba(45,106,159,.08);
+    background: #fff; border: 1px solid #dde5ed; border-radius: 10px;
+    padding: 22px; min-width: 500px;
+    box-shadow: 0 2px 12px rgba(45,106,159,.07);
   }
-  .sheet-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: start;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .school-name {
-    font-size: 11px; font-weight: 700; color: var(--muted);
-    letter-spacing: 1.5px; text-transform: uppercase;
-    margin-bottom: 4px;
-  }
-  .sheet-title {
-    font-size: 20px; font-weight: 900; color: var(--ink);
-    letter-spacing: 3px;
-  }
-  .sheet-meta {
-    font-size: 12px; color: var(--muted); margin-top: 6px;
-    display: flex; gap: 16px;
-  }
-  .sheet-meta span { display: flex; align-items: center; gap: 4px; }
+  .sheet-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; gap: 10px; }
+  .school-name  { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 3px; }
+  .sheet-title  { font-size: 18px; font-weight: 900; color: var(--ink); letter-spacing: 3px; }
+  .sheet-meta   { font-size: 11px; color: var(--muted); margin-top: 5px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat-badge   { background: var(--accent-light); border: 1px solid #c8ddf0; border-radius: 8px; padding: 8px 12px; text-align: right; min-width: 80px; }
+  .stat-badge .num { font-size: 22px; font-weight: 900; color: var(--accent); line-height: 1; }
+  .stat-badge .lbl { font-size: 9px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
 
-  .stat-badge {
-    background: var(--accent-light);
-    border: 1px solid #c8ddf0;
-    border-radius: 8px;
-    padding: 10px 14px;
-    text-align: right;
-    min-width: 100px;
-  }
-  .stat-badge .num { font-size: 24px; font-weight: 900; color: var(--accent); line-height: 1; }
-  .stat-badge .lbl { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th, td { border: 1px solid var(--grid-line); text-align: center; padding: 0; }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
+  thead tr.head-main th {
+    background: var(--ink); color: #fff;
+    font-size: 10px; font-weight: 700; padding: 6px 3px; letter-spacing: .5px;
   }
-  th, td {
-    border: 1px solid var(--grid-line);
-    text-align: center;
-    padding: 0;
+  thead tr.head-week th {
+    background: #e8eff7; color: var(--muted);
+    font-size: 9px; font-weight: 600; padding: 3px 2px;
   }
-  thead tr:first-child th {
-    background: var(--ink);
-    color: #fff;
-    font-size: 11px; font-weight: 700;
-    padding: 7px 4px;
-    letter-spacing: .5px;
-  }
-  thead tr:first-child th.date-col {
-    min-width: 36px; max-width: 40px;
-  }
-  thead tr:nth-child(2) th {
-    background: #e8eff7;
-    color: var(--muted);
-    font-size: 10px; font-weight: 600;
-    padding: 4px 2px;
-  }
-  .col-no   { width: 32px; background: var(--accent-light) !important; color: var(--accent) !important; font-weight: 700 !important; }
-  .col-name { min-width: 70px; text-align: left !important; padding: 0 8px !important; font-weight: 600; }
-  .col-en   { min-width: 65px; text-align: left !important; padding: 0 6px !important; color: var(--muted); }
+  .col-no   { width: 28px; }
+  .col-zh   { min-width: 60px; text-align: left !important; padding: 0 6px !important; font-weight: 600; }
+  .col-en   { min-width: 58px; text-align: left !important; padding: 0 5px !important; color: var(--muted); }
+  .col-sch  { min-width: 44px; font-size: 10px; color: var(--muted); }
+  .col-cls  { min-width: 36px; font-size: 10px; color: var(--muted); }
+  .date-col { min-width: 30px; max-width: 36px; }
 
-  tbody tr { height: 30px; }
+  tbody tr { height: 28px; }
   tbody tr:nth-child(even) { background: #fafcff; }
   tbody tr:hover { background: #f0f5fb; }
 
-  td.cell-workday { background: #fff; }
-  td.cell-saturday { background: var(--sat); }
-  td.cell-holiday  { background: var(--holiday); }
-  td.cell-leave    { background: #fef9ec; }
+  td.cell-work { background: #fff; }
+  td.cell-sat  { background: var(--sat-bg); }
+  td.cell-hol  { background: var(--holiday-bg); }
 
-  td.attendance-cell {
-    cursor: pointer; position: relative;
-    user-select: none;
-    transition: background .1s;
+  td.att {
+    cursor: pointer; user-select: none; transition: filter .1s;
+    font-size: 13px; line-height: 28px;
   }
-  td.attendance-cell:hover { filter: brightness(.92); }
-  td.attendance-cell.present::after  { content: '○'; color: var(--success); font-size: 13px; font-weight: 700; }
-  td.attendance-cell.absent::after   { content: '✕'; color: #c0392b; font-size: 12px; font-weight: 900; }
-  td.attendance-cell.leave::after    { content: '△'; color: var(--warn); font-size: 12px; font-weight: 700; }
-  td.attendance-cell.late::after     { content: '◎'; color: #8e44ad; font-size: 12px; font-weight: 700; }
+  td.att:hover { filter: brightness(.9); }
+  td.att.present::after { content:'○'; color:var(--success); font-weight:700; }
+  td.att.absent::after  { content:'✕'; color:#c0392b; font-weight:900; }
+  td.att.leave::after   { content:'△'; color:var(--warn); font-weight:700; }
+  td.att.late::after    { content:'◎'; color:#8e44ad; font-weight:700; }
 
-  .holiday-label {
-    font-size: 9px; color: var(--holiday-border);
-    display: block; line-height: 1.2;
-    font-weight: 600;
-  }
-  .date-num  { font-size: 12px; font-weight: 700; line-height: 1.5; }
-  .week-label { font-size: 9px; color: var(--muted); }
+  .holiday-label { font-size: 8px; color: var(--holiday-bd); display: block; line-height: 1.2; font-weight: 600; }
+  .date-num  { font-size: 11px; font-weight: 700; display: block; }
+  .week-lbl  { font-size: 8px; color: var(--muted); }
 
-  tfoot td {
-    background: #f0f4f8;
-    font-weight: 700; font-size: 11px;
-    color: var(--muted); padding: 5px 4px;
-  }
-  tfoot .total-num { color: var(--accent); font-size: 13px; }
+  tfoot td { background: #f0f4f8; font-weight: 700; font-size: 10px; color: var(--muted); padding: 4px 3px; }
+  tfoot .total-num { color: var(--accent); font-size: 11px; }
 
-  /* ── Print / PDF Styles ── */
   @media print {
-    header, aside, .action-row, .sheet-header .stat-badge { display: none !important; }
+    header, aside, .action-row { display: none !important; }
     body { background: #fff; }
     main { padding: 0; }
     .app-shell { display: block; }
-    .sheet-wrapper { border: none; box-shadow: none; padding: 8px; }
-    thead tr:first-child th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    td.cell-holiday  { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    td.cell-saturday { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    table { font-size: 10px; }
-    .sheet-title { font-size: 16px; }
+    .sheet-wrapper { border: none; box-shadow: none; padding: 6px; }
+    thead tr.head-main th,
+    td.cell-hol, td.cell-sat { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table { font-size: 9px; }
+    .sheet-title { font-size: 14px; }
+    .stat-badge { display: none; }
   }
 </style>
 </head>
@@ -291,36 +195,28 @@
 <header>
   <div class="logo-mark">點</div>
   <div>
-    <h1>暑 假 點 名 表 產 生 器</h1>
+    <h1>點 名 表 產 生 器</h1>
     <p>自動抓取行政院人事行政總處行事曆 · 支援上傳學生名單 · 匯出 PDF</p>
   </div>
 </header>
 
 <div class="app-shell">
 
-<!-- ── SIDEBAR ── -->
 <aside>
+  <!-- 學校資訊 -->
   <div>
     <div class="panel-title">學校資訊</div>
-    <div class="field-group" style="margin-top:12px;gap:10px;">
-      <div class="field-group">
-        <label>機構名稱</label>
-        <input type="text" id="schoolName" value="耶加教育機構-龍華2校" placeholder="學校 / 機構名稱">
-      </div>
-      <div class="field-group">
-        <label>班級</label>
-        <input type="text" id="className" value="五+六年級" placeholder="班級名稱">
-      </div>
-      <div class="field-group">
-        <label>教學老師</label>
-        <input type="text" id="teacherName" value="Sherry Chuang" placeholder="老師姓名">
-      </div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+      <div class="field-group"><label>機構名稱</label><input type="text" id="schoolName" value="耶加教育機構-龍華2校"></div>
+      <div class="field-group"><label>班級</label><input type="text" id="className" value="五+六年級"></div>
+      <div class="field-group"><label>教學老師</label><input type="text" id="teacherName" value="Sherry Chuang"></div>
     </div>
   </div>
 
+  <!-- 點名表設定 -->
   <div>
     <div class="panel-title">點名表設定</div>
-    <div style="margin-top:12px;gap:10px;display:flex;flex-direction:column;">
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
       <div class="row-2">
         <div class="field-group">
           <label>年份（民國）</label>
@@ -334,21 +230,17 @@
         <div class="field-group">
           <label>月份</label>
           <select id="month">
-            <option value="7" selected>7月</option>
-            <option value="8">8月</option>
+            <option value="1">1月</option><option value="2">2月</option>
+            <option value="3">3月</option><option value="4">4月</option>
+            <option value="5">5月</option><option value="6">6月</option>
+            <option value="7" selected>7月</option><option value="8">8月</option>
+            <option value="9">9月</option><option value="10">10月</option>
+            <option value="11">11月</option><option value="12">12月</option>
           </select>
         </div>
       </div>
       <div class="field-group">
-        <label>表單類型</label>
-        <select id="sheetType">
-          <option value="morning">上午班點名表</option>
-          <option value="afternoon">下午營隊點名表</option>
-          <option value="homework">作業確認表</option>
-        </select>
-      </div>
-      <div class="field-group">
-        <label>上課模式（上午班）</label>
+        <label>上課日篩選</label>
         <select id="dayFilter">
           <option value="weekdays">週一至週五（排除例假日）</option>
           <option value="all">顯示所有日期</option>
@@ -356,423 +248,402 @@
           <option value="24">週二、四（二四班）</option>
         </select>
       </div>
+      <div class="field-group">
+        <label>顯示欄位</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;">
+          <label style="font-weight:400;display:flex;align-items:center;gap:4px;font-size:11px;">
+            <input type="checkbox" id="showSchool" checked> 國小
+          </label>
+          <label style="font-weight:400;display:flex;align-items:center;gap:4px;font-size:11px;">
+            <input type="checkbox" id="showClass" checked> 班級
+          </label>
+          <label style="font-weight:400;display:flex;align-items:center;gap:4px;font-size:11px;">
+            <input type="checkbox" id="showEn" checked> 英文名
+          </label>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- 上傳名單 -->
   <div>
-    <div class="panel-title">上傳學生名單</div>
-    <div style="margin-top:12px;">
+    <div class="panel-title">學生名單</div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
+      <div class="col-map">
+        <div class="col-badge">序號</div>
+        <div class="col-badge">中文名</div>
+        <div class="col-badge">英文名</div>
+        <div class="col-badge">國小</div>
+        <div class="col-badge">班級</div>
+      </div>
       <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-        <svg width="32" height="32" fill="none" stroke="#a0b4c8" stroke-width="1.5" viewBox="0 0 24 24">
+        <svg width="28" height="28" fill="none" stroke="#a0b4c8" stroke-width="1.5" viewBox="0 0 24 24">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="12" y1="18" x2="12" y2="12"/>
-          <line x1="9" y1="15" x2="15" y2="15"/>
+          <polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
         </svg>
-        <p>點擊上傳 <strong>.xlsx</strong> 學生名單<br>或直接貼上名字（每行一位）</p>
+        <p>點擊上傳 <strong>.xlsx</strong> 學生名單<br>格式：序號｜中文名｜英文名｜國小｜班級</p>
       </div>
       <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
-      <div style="margin-top:8px;">
-        <label style="margin-bottom:4px;display:block;">手動輸入（每行：中文名,英文名）</label>
-        <textarea id="manualStudents" rows="5" placeholder="王佑廷,Curry&#10;李承玹,Lawrence&#10;徐少驊,Mark"></textarea>
-      </div>
+      <p class="paste-hint">或直接貼上（每行以 Tab 或逗號分隔）：<br>
+        <code style="font-size:10px;color:#555;">蘇昀希, Dottie, 福山, 111</code>
+      </p>
+      <textarea id="manualStudents" placeholder="蘇昀希, Dottie, 福山, 111&#10;王佑廷, Curry, 龍華, 201&#10;李承玹, Lawrence, 文府, 109"></textarea>
+      <div id="parsePreview" style="font-size:10px;color:var(--success);min-height:16px;"></div>
     </div>
   </div>
 
+  <!-- 行事曆狀態 -->
   <div>
     <div class="panel-title">行事曆狀態</div>
-    <div class="status-bar" id="calStatus" style="margin-top:10px;">
-      <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7"/><path fill="#fff" d="M8 4v5l3 1.5-.5 1L7 9V4z"/></svg>
-      點擊「產生點名表」自動載入行事曆
+    <div class="status-bar" id="calStatus" style="margin-top:8px;">
+      ⏱ 點擊「產生點名表」自動載入官方行事曆
     </div>
-    <div class="legend" style="margin-top:10px;">
-      <div class="legend-item"><div class="legend-dot dot-workday"></div>上班日</div>
+    <div class="legend" style="margin-top:8px;">
+      <div class="legend-item"><div class="legend-dot dot-work"></div>上班日</div>
       <div class="legend-item"><div class="legend-dot dot-sat"></div>週六</div>
-      <div class="legend-item"><div class="legend-dot dot-holiday"></div>假日</div>
-      <div class="legend-item"><div class="legend-dot dot-leave"></div>請假△</div>
+      <div class="legend-item"><div class="legend-dot dot-hol"></div>假日</div>
+    </div>
+    <div style="margin-top:6px;font-size:10px;color:var(--muted);">
+      點格子切換：○出席 → ✕缺席 → △請假 → ◎遲到
     </div>
   </div>
 
-  <div style="display:flex;flex-direction:column;gap:8px;" class="action-row">
+  <!-- 動作 -->
+  <div class="action-row" style="display:flex;flex-direction:column;gap:7px;">
     <button class="btn btn-primary" onclick="generate()">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
       產生點名表
     </button>
-    <button class="btn btn-pdf" id="pdfBtn" onclick="printPDF()" disabled>
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+    <button class="btn btn-pdf" id="pdfBtn" onclick="window.print()" disabled>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       匯出 PDF
     </button>
-    <button class="btn btn-secondary" id="clearBtn" onclick="clearTable()" disabled>清除點名記錄</button>
+    <button class="btn btn-secondary" id="clearBtn" onclick="clearAtt()" disabled>清除點名記錄</button>
   </div>
 </aside>
 
-<!-- ── MAIN PREVIEW ── -->
 <main id="mainArea">
   <div class="preview-placeholder" id="placeholder">
-    <svg width="80" height="80" fill="none" stroke="#b0c0d0" stroke-width="1.5" viewBox="0 0 24 24">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-      <line x1="3" y1="10" x2="21" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/>
+    <svg width="72" height="72" fill="none" stroke="#b0c0d0" stroke-width="1.5" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="2"/>
+      <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+      <line x1="3" y1="10" x2="21" y2="10"/>
     </svg>
-    <p>填寫左側設定後，點「產生點名表」</p>
+    <p>填寫左側設定，點「產生點名表」</p>
   </div>
 </main>
-
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────
-let calendarData = null; // {date: {isHoliday, week_chinese, caption}}
-let students = [];       // [{zh, en}]
-let workDays = [];       // filtered dates for this month
-let attendance = {};     // {studentIdx: {date: 'present'|'absent'|'leave'|'late'}}
+// ── State ──
+let calData = null;
+let students = [];
+let workDays = [];
+let att = {}; // {si: {dateStr: 'present'|'absent'|'leave'|'late'}}
+const CYCLE = ['present','absent','leave','late',null];
+const WEEKS_CH = ['日','一','二','三','四','五','六'];
 
-const weekMap = {'日':'日','一':'一','二':'二','三':'三','四':'四','五':'五','六':'六'};
-const CYCLE = ['present','absent','leave','late', null];
-
-// ─────────────────────────────────────────────
-// Calendar API (政府資料開放平台)
-// ─────────────────────────────────────────────
-async function fetchCalendar(year) {
-  // Use the Taiwan government data API (CORS-friendly via proxy JSON)
-  // Primary: data.gov.tw CSV → parse
-  // Fallback: built-in weekend/holiday logic
-  const url = `https://data.gov.tw/api/v2/rest/datastore/3b8492d0-a5b5-44a0-abfb-8e04ffe88e77?filters=year%3A${year}&limit=400&fields=date%2CisHoliday%2Cweek%2Ccaption`;
-  
+// ── File upload ──
+document.getElementById('fileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
   try {
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) throw new Error('API error');
-    const json = await res.json();
-    if (json.success && json.result && json.result.records) {
-      const map = {};
-      json.result.records.forEach(r => {
-        map[r.date] = { isHoliday: r.isHoliday === '2', week: r.week, caption: r.caption || '' };
-      });
-      return map;
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf);
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+
+    const parsed = [];
+    // Find data rows: skip header rows (first row usually header)
+    let startRow = 0;
+    // If first cell of row 0 looks like a header (not a number), skip it
+    if (rows.length > 0) {
+      const firstCell = String(rows[0][0] || '').trim();
+      if (isNaN(parseInt(firstCell)) && firstCell !== '') startRow = 1;
     }
-    throw new Error('no records');
-  } catch (e) {
-    // Fallback: fetch from ruyut TaiwanCalendar GitHub raw JSON
-    try {
-      const res2 = await fetch(`https://raw.githubusercontent.com/ruyut/TaiwanCalendar/master/data/${year}.json`, { signal: AbortSignal.timeout(8000) });
-      if (!res2.ok) throw new Error();
-      const arr = await res2.json();
-      const map = {};
-      arr.forEach(r => {
-        map[r.date] = { isHoliday: r.isHoliday, week: r.week, caption: r.description || '' };
-      });
-      return map;
-    } catch(e2) {
-      // Ultimate fallback: compute locally
-      return buildLocalCalendar(year);
+
+    for (let i = startRow; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row || row.every(c => c === '' || c === null)) continue;
+      // Columns: 序號(0), 中文姓名(1), 英文姓名(2), 國小(3), 國小班級(4)
+      const num = String(row[0]||'').trim();
+      const zh  = String(row[1]||'').trim();
+      const en  = String(row[2]||'').trim();
+      const sch = String(row[3]||'').trim();
+      const cls = String(row[4]||'').trim();
+      if (zh && /[\u4e00-\u9fff]/.test(zh)) {
+        parsed.push({ num: num || String(parsed.length+1), zh, en, sch, cls });
+      }
     }
+
+    if (parsed.length) {
+      students = parsed;
+      document.getElementById('manualStudents').value =
+        parsed.map(s => `${s.zh}, ${s.en}, ${s.sch}, ${s.cls}`).join('\n');
+      document.getElementById('parsePreview').textContent = `✓ 成功載入 ${parsed.length} 位學生`;
+      const zone = document.getElementById('uploadZone');
+      zone.classList.add('has-file');
+      zone.innerHTML = `<div class="file-name">✓ ${file.name}</div><p>已載入 ${parsed.length} 位學生</p>`;
+    } else {
+      alert('找不到學生資料，請確認欄位順序：序號、中文姓名、英文姓名、國小、班級');
+    }
+  } catch(err) {
+    alert('讀取失敗：' + err.message);
   }
+});
+
+// ── Manual input live preview ──
+document.getElementById('manualStudents').addEventListener('input', () => {
+  const p = parseManual();
+  document.getElementById('parsePreview').textContent = p.length ? `✓ 偵測到 ${p.length} 位學生` : '';
+});
+
+function parseManual() {
+  const raw = document.getElementById('manualStudents').value.trim();
+  if (!raw) return [];
+  return raw.split('\n').map((line, i) => {
+    // Support comma or tab separated
+    const parts = line.includes('\t') ? line.split('\t') : line.split(',');
+    const clean = parts.map(p => p.trim());
+    return {
+      num: String(i+1),
+      zh:  clean[0] || '',
+      en:  clean[1] || '',
+      sch: clean[2] || '',
+      cls: clean[3] || '',
+    };
+  }).filter(s => s.zh && /[\u4e00-\u9fff]/.test(s.zh));
 }
 
-function buildLocalCalendar(year) {
-  const map = {};
-  // Taiwan 2025 (114) & 2026 (115) public holidays
-  const holidays = {
-    2025: ['20250101','20250127','20250128','20250129','20250130','20250131','20250201','20250202','20250228','20250403','20250404','20250501','20250630','20250929','20251010'],
-    2026: ['20260101','20260215','20260216','20260217','20260218','20260219','20260220','20260221','20260228','20260403','20260501','20261001','20261010']
+// ── Calendar fetch ──
+async function fetchCalendar(adYear) {
+  // Try GitHub raw JSON (most reliable, no CORS issue)
+  try {
+    const r = await fetch(`https://raw.githubusercontent.com/ruyut/TaiwanCalendar/master/data/${adYear}.json`,
+      { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error();
+    const arr = await r.json();
+    const map = {};
+    arr.forEach(d => { map[d.date] = { isHoliday: d.isHoliday, week: d.week, caption: d.description || '' }; });
+    return { map, source: 'ruyut/TaiwanCalendar (GitHub)' };
+  } catch {}
+
+  // Fallback: local weekend + known holidays
+  return { map: buildLocal(adYear), source: '本機計算（離線模式）' };
+}
+
+function buildLocal(year) {
+  const hols = {
+    2025:['20250101','20250127','20250128','20250129','20250130','20250131','20250201','20250202','20250228','20250403','20250404','20250501','20250929','20251010'],
+    2026:['20260101','20260215','20260216','20260217','20260218','20260219','20260220','20260221','20260228','20260403','20260501','20261010'],
   };
-  const hSet = new Set(holidays[year] || []);
-  const d = new Date(year, 0, 1);
-  while (d.getFullYear() === year) {
-    const ds = `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
-    const wd = d.getDay();
-    const isHol = wd === 0 || hSet.has(ds);
-    const weeks = ['日','一','二','三','四','五','六'];
-    map[ds] = { isHoliday: isHol, week: weeks[wd], caption: hSet.has(ds) ? '國定假日' : '' };
+  const hSet = new Set(hols[year]||[]);
+  const map = {}, d = new Date(year,0,1);
+  while(d.getFullYear()===year){
+    const ds=`${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+    const wd=d.getDay();
+    map[ds]={isHoliday:wd===0||hSet.has(ds),week:WEEKS_CH[wd],caption:hSet.has(ds)?'國定假日':''};
     d.setDate(d.getDate()+1);
   }
   return map;
 }
 
-// ─────────────────────────────────────────────
-// File upload handler
-// ─────────────────────────────────────────────
-document.getElementById('fileInput').addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const zone = document.getElementById('uploadZone');
-  try {
-    const buf = await file.arrayBuffer();
-    const wb = XLSX.read(buf);
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header:1 });
-    const parsed = [];
-    rows.forEach(row => {
-      if (!row || row.length === 0) return;
-      // Try to find Chinese name and English name columns
-      let zh = '', en = '';
-      row.forEach((cell, i) => {
-        if (typeof cell === 'string') {
-          if (/[\u4e00-\u9fff]/.test(cell) && !zh) zh = cell.trim();
-          else if (/^[A-Za-z\s.]+$/.test(cell.trim()) && cell.trim().length > 1 && !en) en = cell.trim();
-        }
-      });
-      if (zh) parsed.push({ zh, en: en || '' });
-    });
-    if (parsed.length) {
-      students = parsed;
-      document.getElementById('manualStudents').value = parsed.map(s => `${s.zh},${s.en}`).join('\n');
-      zone.classList.add('has-file');
-      zone.innerHTML = `<div class="file-name">✓ ${file.name}</div><p style="margin-top:4px;">已載入 ${parsed.length} 位學生</p>`;
-    }
-  } catch(err) {
-    alert('無法讀取檔案，請確認格式正確');
-  }
-});
-
-// ─────────────────────────────────────────────
-// Parse manual input
-// ─────────────────────────────────────────────
-function parseStudents() {
-  const raw = document.getElementById('manualStudents').value.trim();
-  if (!raw) return [];
-  return raw.split('\n').map((line, i) => {
-    const parts = line.split(',');
-    return { zh: (parts[0]||'').trim(), en: (parts[1]||'').trim(), num: i+1 };
-  }).filter(s => s.zh);
-}
-
-// ─────────────────────────────────────────────
-// Generate
-// ─────────────────────────────────────────────
+// ── Generate ──
 async function generate() {
   const st = document.getElementById('calStatus');
-  st.className = 'status-bar loading';
-  st.textContent = '⏳ 正在載入台灣政府行事曆...';
+  st.className='status-bar loading'; st.textContent='⏳ 正在載入台灣政府行事曆...';
 
   const rocYear = parseInt(document.getElementById('rocYear').value);
   const adYear  = rocYear + 1911;
   const month   = parseInt(document.getElementById('month').value);
 
-  try {
-    calendarData = await fetchCalendar(adYear);
-    st.className = 'status-bar';
-    st.textContent = `✓ 行事曆載入成功（${adYear}年 來源：行政院人事行政總處）`;
-  } catch(e) {
-    st.className = 'status-bar error';
-    st.textContent = '⚠ 行事曆載入失敗，改用本機計算（含例假日）';
-    calendarData = buildLocalCalendar(adYear);
-  }
+  const result = await fetchCalendar(adYear);
+  calData = result.map;
+  st.className='status-bar ok';
+  st.textContent=`✓ 行事曆載入成功（來源：${result.source}）`;
 
   // Parse students
-  students = parseStudents();
-  if (!students.length) { alert('請先輸入學生名單！'); return; }
-  students = students.map((s,i) => ({ ...s, num: i+1 }));
+  const manual = parseManual();
+  if (!manual.length && !students.length) { alert('請先輸入學生名單！'); return; }
+  if (manual.length) students = manual;
+  students = students.map((s,i) => ({ ...s, num: String(i+1) }));
 
-  // Build workdays for this month
+  // Build workdays
   const dayFilter = document.getElementById('dayFilter').value;
   const daysInMonth = new Date(adYear, month, 0).getDate();
   workDays = [];
-  for (let d = 1; d <= daysInMonth; d++) {
+  for (let d=1; d<=daysInMonth; d++) {
     const ds = `${adYear}${String(month).padStart(2,'0')}${String(d).padStart(2,'0')}`;
-    const info = calendarData[ds] || { isHoliday: [0,6].includes(new Date(adYear,month-1,d).getDay()), week: '日' };
-    const wd = new Date(adYear, month-1, d).getDay(); // 0=Sun
-    info.dateStr = ds;
-    info.day = d;
-    info.wd = wd;
-
-    if (dayFilter === 'weekdays') {
-      if (!info.isHoliday && wd !== 0) workDays.push(info);
-    } else if (dayFilter === '13') {
-      if (!info.isHoliday && (wd === 1 || wd === 3)) workDays.push(info);
-    } else if (dayFilter === '24') {
-      if (!info.isHoliday && (wd === 2 || wd === 4)) workDays.push(info);
-    } else {
-      workDays.push(info);
-    }
+    const wd = new Date(adYear,month-1,d).getDay();
+    const info = calData[ds] || { isHoliday: wd===0||wd===6, week: WEEKS_CH[wd], caption: '' };
+    info.dateStr=ds; info.day=d; info.wd=wd;
+    if (dayFilter==='weekdays'){ if(!info.isHoliday&&wd!==0) workDays.push(info); }
+    else if(dayFilter==='13')  { if(!info.isHoliday&&(wd===1||wd===3)) workDays.push(info); }
+    else if(dayFilter==='24')  { if(!info.isHoliday&&(wd===2||wd===4)) workDays.push(info); }
+    else workDays.push(info);
   }
 
-  // Reset attendance
-  attendance = {};
-
+  att = {};
   renderTable();
-  document.getElementById('pdfBtn').disabled = false;
-  document.getElementById('clearBtn').disabled = false;
+  document.getElementById('pdfBtn').disabled=false;
+  document.getElementById('clearBtn').disabled=false;
 }
 
-// ─────────────────────────────────────────────
-// Render
-// ─────────────────────────────────────────────
+// ── Render ──
 function renderTable() {
   const rocYear    = document.getElementById('rocYear').value;
   const month      = document.getElementById('month').value;
   const schoolName = document.getElementById('schoolName').value;
   const className  = document.getElementById('className').value;
   const teacher    = document.getElementById('teacherName').value;
-  const sheetType  = document.getElementById('sheetType').value;
-  const typeLabel  = { morning:'暑期點名表', afternoon:'下午營隊點名表', homework:'暑假作業確認表' }[sheetType];
+  const showSchool = document.getElementById('showSchool').checked;
+  const showClass  = document.getElementById('showClass').checked;
+  const showEn     = document.getElementById('showEn').checked;
 
-  const placeholder = document.getElementById('placeholder');
-  if (placeholder) placeholder.remove();
+  document.getElementById('placeholder')?.remove();
+  document.getElementById('sheetWrapper')?.remove();
 
-  const area = document.getElementById('mainArea');
-  let old = document.getElementById('sheetWrapper');
-  if (old) old.remove();
-
-  const wrapper = document.createElement('div');
-  wrapper.className = 'sheet-wrapper'; wrapper.id = 'sheetWrapper';
+  const wrap = document.createElement('div');
+  wrap.className='sheet-wrapper'; wrap.id='sheetWrapper';
 
   // Header
-  const headerDiv = document.createElement('div');
-  headerDiv.className = 'sheet-header';
-  headerDiv.innerHTML = `
-    <div>
-      <div class="school-name">${schoolName}</div>
-      <div class="sheet-title">班 級 點 名 表</div>
-      <div class="sheet-meta">
-        <span>📅 民國 ${rocYear} 年 ${month} 月份・${typeLabel}</span>
-        <span>👨‍🏫 ${className}</span>
-        <span>✏️ ${teacher}</span>
+  wrap.innerHTML=`
+    <div class="sheet-header">
+      <div>
+        <div class="school-name">${schoolName}</div>
+        <div class="sheet-title">班 級 點 名 表</div>
+        <div class="sheet-meta">
+          <span>📅 民國 ${rocYear} 年 ${month} 月份</span>
+          <span>👨‍🏫 ${className}</span>
+          <span>✏️ ${teacher}</span>
+        </div>
       </div>
-    </div>
-    <div class="stat-badge">
-      <div class="num">${workDays.length}</div>
-      <div class="lbl">上課天數</div>
+      <div class="stat-badge">
+        <div class="num">${workDays.length}</div>
+        <div class="lbl">上課天數</div>
+      </div>
     </div>`;
-  wrapper.appendChild(headerDiv);
 
   // Table
   const table = document.createElement('table');
-
-  // Header row 1: labels + dates
   const thead = document.createElement('thead');
-  const tr1 = document.createElement('tr');
-  ['序', '姓名', '英文'].forEach(h => {
-    const th = document.createElement('th');
-    th.rowSpan = 2;
-    th.textContent = h;
-    th.className = h==='序' ? 'col-no' : h==='姓名' ? 'col-name' : 'col-en';
+
+  // Row 1: column headers + date numbers
+  const tr1 = document.createElement('tr'); tr1.className='head-main';
+  const fixedCols = [
+    {label:'序', cls:'col-no', show:true},
+    {label:'姓名', cls:'col-zh', show:true},
+    {label:'英文', cls:'col-en', show:showEn},
+    {label:'國小', cls:'col-sch', show:showSchool},
+    {label:'班級', cls:'col-cls', show:showClass},
+  ];
+  fixedCols.forEach(col => {
+    if (!col.show) return;
+    const th=document.createElement('th'); th.rowSpan=2; th.textContent=col.label; th.className=col.cls;
     tr1.appendChild(th);
   });
   workDays.forEach(info => {
-    const th = document.createElement('th');
-    th.className = 'date-col';
-    const isSat = info.wd === 6;
-    const isHol = info.isHoliday;
-    if (isHol && info.caption) {
-      th.innerHTML = `<span class="holiday-label">${info.caption.substring(0,2)}</span><span class="date-num">${info.day}</span>`;
-    } else {
-      th.innerHTML = `<span class="date-num">${info.day}</span>`;
-    }
-    if (isSat) th.style.background='#c8d9eb';
-    else if (isHol) th.style.background='#d4836a'; 
-    else th.style.background='';
+    const th=document.createElement('th'); th.className='date-col';
+    const isSat=info.wd===6, isHol=info.isHoliday;
+    th.innerHTML = (isHol&&info.caption)
+      ? `<span class="holiday-label">${info.caption.substring(0,2)}</span><span class="date-num">${info.day}</span>`
+      : `<span class="date-num">${info.day}</span>`;
+    if(isHol) th.style.background='#c57a60';
+    else if(isSat) th.style.background='#7aa8cc';
     tr1.appendChild(th);
   });
-  // Absent count header
-  const thAbsent = document.createElement('th');
-  thAbsent.rowSpan = 2; thAbsent.textContent = '請假數';
-  tr1.appendChild(thAbsent);
+  const thAbs=document.createElement('th'); thAbs.rowSpan=2; thAbs.textContent='請假';
+  tr1.appendChild(thAbs);
   thead.appendChild(tr1);
 
-  // Header row 2: weekday labels
-  const tr2 = document.createElement('tr');
+  // Row 2: weekday labels
+  const tr2=document.createElement('tr'); tr2.className='head-week';
   workDays.forEach(info => {
-    const th = document.createElement('th');
-    const weeks = ['日','一','二','三','四','五','六'];
-    th.textContent = weeks[info.wd];
-    if (info.wd === 6) th.style.color='#2d6a9f';
-    else if (info.isHoliday) th.style.color='#c0392b';
+    const th=document.createElement('th');
+    th.textContent=WEEKS_CH[info.wd];
+    if(info.wd===6) th.style.color='#2d6a9f';
+    else if(info.isHoliday) th.style.color='#c0392b';
     tr2.appendChild(th);
   });
   thead.appendChild(tr2);
   table.appendChild(thead);
 
   // Body
-  const tbody = document.createElement('tbody');
+  const tbody=document.createElement('tbody');
   students.forEach((stu, si) => {
-    if (!attendance[si]) attendance[si] = {};
-    const tr = document.createElement('tr');
+    if(!att[si]) att[si]={};
+    const tr=document.createElement('tr');
 
-    const tdNo = document.createElement('td'); tdNo.textContent = stu.num; tdNo.className='col-no'; tr.appendChild(tdNo);
-    const tdZh = document.createElement('td'); tdZh.textContent = stu.zh; tdZh.className='col-name'; tr.appendChild(tdZh);
-    const tdEn = document.createElement('td'); tdEn.textContent = stu.en; tdEn.className='col-en'; tr.appendChild(tdEn);
+    const addFixed=(text, cls)=>{ const td=document.createElement('td'); td.textContent=text; td.className=cls; tr.appendChild(td); };
+    addFixed(stu.num, 'col-no');
+    addFixed(stu.zh, 'col-zh');
+    if(showEn)     addFixed(stu.en, 'col-en');
+    if(showSchool) addFixed(stu.sch, 'col-sch');
+    if(showClass)  addFixed(stu.cls, 'col-cls');
 
     workDays.forEach(info => {
-      const td = document.createElement('td');
-      const isSat = info.wd === 6;
-      const isHol = info.isHoliday;
-      td.className = 'attendance-cell ' + (isHol ? 'cell-holiday' : isSat ? 'cell-saturday' : 'cell-workday');
-      const state = attendance[si][info.dateStr];
-      if (state) td.classList.add(state);
-
-      td.addEventListener('click', () => {
-        const cur = attendance[si][info.dateStr] || null;
-        const idx = CYCLE.indexOf(cur);
-        const next = CYCLE[(idx+1) % CYCLE.length];
-        if (next === null) delete attendance[si][info.dateStr];
-        else attendance[si][info.dateStr] = next;
-        // Update cell class
-        td.className = 'attendance-cell ' + (isHol ? 'cell-holiday' : isSat ? 'cell-saturday' : 'cell-workday');
-        if (next) td.classList.add(next);
-        // Update leave count
-        updateLeaveCounts();
+      const td=document.createElement('td');
+      const isSat=info.wd===6, isHol=info.isHoliday;
+      td.className='att '+(isHol?'cell-hol':isSat?'cell-sat':'cell-work');
+      const state=att[si][info.dateStr];
+      if(state) td.classList.add(state);
+      td.addEventListener('click',()=>{
+        const cur=att[si][info.dateStr]||null;
+        const next=CYCLE[(CYCLE.indexOf(cur)+1)%CYCLE.length];
+        if(next===null) delete att[si][info.dateStr]; else att[si][info.dateStr]=next;
+        td.className='att '+(isHol?'cell-hol':isSat?'cell-sat':'cell-work');
+        if(next) td.classList.add(next);
+        updateCounts();
       });
-
       tr.appendChild(td);
     });
 
-    // Leave count cell
-    const tdLeave = document.createElement('td');
-    tdLeave.id = `leave-${si}`;
-    tdLeave.style.fontWeight='700'; tdLeave.style.color='var(--warn)';
-    const cnt = Object.values(attendance[si]||{}).filter(v=>v==='absent'||v==='leave').length;
-    tdLeave.textContent = cnt || '';
-    tr.appendChild(tdLeave);
-
+    const tdL=document.createElement('td'); tdL.id=`leave-${si}`;
+    tdL.style.cssText='font-weight:700;color:var(--warn);';
+    const cnt=Object.values(att[si]).filter(v=>v==='absent'||v==='leave').length;
+    tdL.textContent=cnt||'';
+    tr.appendChild(tdL);
     tbody.appendChild(tr);
   });
   table.appendChild(tbody);
 
   // Footer
-  const tfoot = document.createElement('tfoot');
-  const trF = document.createElement('tr');
-  const tdLabel = document.createElement('td'); tdLabel.colSpan=3; tdLabel.textContent='請假人數'; trF.appendChild(tdLabel);
-  workDays.forEach(info => {
-    const td = document.createElement('td');
-    td.id = `col-abs-${info.dateStr}`;
-    td.className = 'total-num';
-    td.textContent = '';
+  const tfoot=document.createElement('tfoot');
+  const trF=document.createElement('tr');
+  const visCount = fixedCols.filter(c=>c.show).length;
+  const tdLbl=document.createElement('td'); tdLbl.colSpan=visCount; tdLbl.textContent='請假人數'; trF.appendChild(tdLbl);
+  workDays.forEach(info=>{
+    const td=document.createElement('td'); td.id=`col-abs-${info.dateStr}`; td.className='total-num';
     trF.appendChild(td);
   });
-  const tdFill = document.createElement('td'); trF.appendChild(tdFill);
+  const tdFill=document.createElement('td'); trF.appendChild(tdFill);
   tfoot.appendChild(trF);
   table.appendChild(tfoot);
 
-  wrapper.appendChild(table);
-  area.appendChild(wrapper);
+  wrap.appendChild(table);
+  document.getElementById('mainArea').appendChild(wrap);
+  updateCounts();
 }
 
-function updateLeaveCounts() {
-  students.forEach((stu, si) => {
-    const cnt = Object.values(attendance[si]||{}).filter(v=>v==='absent'||v==='leave').length;
-    const el = document.getElementById(`leave-${si}`);
-    if (el) el.textContent = cnt || '';
+function updateCounts() {
+  students.forEach((_,si)=>{
+    const cnt=Object.values(att[si]||{}).filter(v=>v==='absent'||v==='leave').length;
+    const el=document.getElementById(`leave-${si}`);
+    if(el) el.textContent=cnt||'';
   });
-  workDays.forEach(info => {
-    const cnt = students.filter((stu,si) => {
-      const s = attendance[si]?.[info.dateStr];
-      return s === 'absent' || s === 'leave';
+  workDays.forEach(info=>{
+    const cnt=students.filter((_,si)=>{
+      const s=att[si]?.[info.dateStr]; return s==='absent'||s==='leave';
     }).length;
-    const el = document.getElementById(`col-abs-${info.dateStr}`);
-    if (el) el.textContent = cnt || '';
+    const el=document.getElementById(`col-abs-${info.dateStr}`);
+    if(el) el.textContent=cnt||'';
   });
 }
 
-function clearTable() {
-  if (!confirm('確定清除所有點名記錄？')) return;
-  attendance = {};
+function clearAtt() {
+  if(!confirm('確定清除所有點名記錄？')) return;
+  att={};
   renderTable();
-}
-
-function printPDF() {
-  window.print();
 }
 </script>
 </body>
