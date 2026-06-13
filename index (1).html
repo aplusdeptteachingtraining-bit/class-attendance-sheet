@@ -184,10 +184,7 @@
     color: var(--ink); font-weight: 600; letter-spacing: .3px;
   }
   /* 備註欄 */
-  .sheet-remark { margin-top: 10px; border: 1px solid var(--grid-line); border-radius: 6px; padding: 8px 12px; }
-  .sheet-remark-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 6px; }
-  .sheet-remark-lines { display: flex; flex-direction: column; gap: 5px; }
-  .sheet-remark-line { border-bottom: 1px solid #dde5ed; height: 22px; }
+
 
   @media print {
     @page { size: A4 landscape; margin: 8mm 8mm 8mm 8mm; }
@@ -216,9 +213,7 @@
     .holiday-label { font-size: 6px; }
     tfoot td { font-size: 7.5px; padding: 2px; }
     .sheet-footer-note { font-size: 9px; padding: 4px 8px; margin-top: 5px; }
-    .sheet-remark { margin-top: 5px; padding: 4px 8px; }
-    .sheet-remark-label { font-size: 8px; }
-    .sheet-remark-line { height: 15px; }
+
   }
 </style>
 </head>
@@ -244,7 +239,6 @@
       <div class="field-group"><label>班級</label><input type="text" id="className" value="五+六年級"></div>
       <div class="field-group"><label>教學老師</label><input type="text" id="teacherName" value="Sherry Chuang"></div>
       <div class="field-group"><label>底部說明文字</label><input type="text" id="footerNote" value="請假打 X　有到打 V　有吃晚餐請圈起來備註升級餐或一般餐" placeholder="底部說明列文字"></div>
-      <div class="field-group"><label>備註行數</label><select id="remarkLines"><option value="2">2行</option><option value="3" selected>3行</option><option value="4">4行</option><option value="5">5行</option></select></div>
     </div>
   </div>
 
@@ -666,13 +660,6 @@ function renderTable() {
   noteDiv.textContent = '【說明】' + noteText;
   wrap.appendChild(noteDiv);
 
-  // Remark section
-  const remarkLines = parseInt(document.getElementById('remarkLines').value) || 3;
-  const remarkDiv = document.createElement('div');
-  remarkDiv.className = 'sheet-remark';
-  remarkDiv.innerHTML = '<div class="sheet-remark-label">備　　註</div><div class="sheet-remark-lines">' +
-    Array(remarkLines).fill('<div class="sheet-remark-line"></div>').join('') + '</div>';
-  wrap.appendChild(remarkDiv);
 
   document.getElementById('mainArea').appendChild(wrap);
   updateCounts();
