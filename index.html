@@ -176,17 +176,49 @@
   tfoot td { background: #f0f4f8; font-weight: 700; font-size: 10px; color: var(--muted); padding: 4px 3px; }
   tfoot .total-num { color: var(--accent); font-size: 11px; }
 
+  /* 底部說明列 */
+  .sheet-footer-note {
+    margin-top: 10px; padding: 6px 10px;
+    background: #f0f4f8; border-left: 3px solid var(--accent-mid);
+    border-radius: 0 5px 5px 0; font-size: 11px;
+    color: var(--ink); font-weight: 600; letter-spacing: .3px;
+  }
+  /* 備註欄 */
+  .sheet-remark { margin-top: 10px; border: 1px solid var(--grid-line); border-radius: 6px; padding: 8px 12px; }
+  .sheet-remark-label { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: 1.5px; margin-bottom: 6px; }
+  .sheet-remark-lines { display: flex; flex-direction: column; gap: 5px; }
+  .sheet-remark-line { border-bottom: 1px solid #dde5ed; height: 22px; }
+
   @media print {
+    @page { size: A4 landscape; margin: 8mm 8mm 8mm 8mm; }
     header, aside, .action-row { display: none !important; }
-    body { background: #fff; }
+    body { background: #fff; font-size: 8px; }
     main { padding: 0; }
     .app-shell { display: block; }
-    .sheet-wrapper { border: none; box-shadow: none; padding: 6px; }
+    .sheet-wrapper { border: none; box-shadow: none; padding: 2px; }
     thead tr.head-main th,
     td.cell-hol, td.cell-sat { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    table { font-size: 9px; }
-    .sheet-title { font-size: 14px; }
-    .stat-badge { display: none; }
+    table { font-size: 7.5px; }
+    .sheet-title { font-size: 13px; letter-spacing: 2px; }
+    .school-name, .sheet-meta { font-size: 9px; }
+    .stat-badge  { display: none; }
+    .sheet-header { margin-bottom: 5px; }
+    thead tr.head-main th { padding: 3px 2px; font-size: 8px; }
+    thead tr.head-week th { padding: 2px 1px; font-size: 7px; }
+    tbody tr { height: 18px; }
+    td.att { font-size: 10px; line-height: 18px; }
+    .col-zh { min-width: 44px !important; font-size: 8px; }
+    .col-en { min-width: 40px !important; font-size: 7.5px; }
+    .col-sch{ min-width: 28px !important; font-size: 7px; }
+    .col-cls{ min-width: 22px !important; font-size: 7px; }
+    .date-col { min-width: 18px !important; max-width: 24px !important; }
+    .date-num { font-size: 8px; }
+    .holiday-label { font-size: 6px; }
+    tfoot td { font-size: 7.5px; padding: 2px; }
+    .sheet-footer-note { font-size: 9px; padding: 4px 8px; margin-top: 5px; }
+    .sheet-remark { margin-top: 5px; padding: 4px 8px; }
+    .sheet-remark-label { font-size: 8px; }
+    .sheet-remark-line { height: 15px; }
   }
 </style>
 </head>
@@ -208,8 +240,11 @@
     <div class="panel-title">學校資訊</div>
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px;">
       <div class="field-group"><label>機構名稱</label><input type="text" id="schoolName" value="耶加教育機構-龍華2校"></div>
+      <div class="field-group"><label>表單名稱</label><input type="text" id="sheetLabel" value="班級點名表" placeholder="例：接送表、班級點名表、營隊簽到表"></div>
       <div class="field-group"><label>班級</label><input type="text" id="className" value="五+六年級"></div>
       <div class="field-group"><label>教學老師</label><input type="text" id="teacherName" value="Sherry Chuang"></div>
+      <div class="field-group"><label>底部說明文字</label><input type="text" id="footerNote" value="請假打 X　有到打 V　有吃晚餐請圈起來備註升級餐或一般餐" placeholder="底部說明列文字"></div>
+      <div class="field-group"><label>備註行數</label><select id="remarkLines"><option value="2">2行</option><option value="3" selected>3行</option><option value="4">4行</option><option value="5">5行</option></select></div>
     </div>
   </div>
 
@@ -494,6 +529,7 @@ function renderTable() {
   const rocYear    = document.getElementById('rocYear').value;
   const month      = document.getElementById('month').value;
   const schoolName = document.getElementById('schoolName').value;
+  const sheetLabel = document.getElementById('sheetLabel').value || '班級點名表';
   const className  = document.getElementById('className').value;
   const teacher    = document.getElementById('teacherName').value;
   const showSchool = document.getElementById('showSchool').checked;
@@ -511,7 +547,7 @@ function renderTable() {
     <div class="sheet-header">
       <div>
         <div class="school-name">${schoolName}</div>
-        <div class="sheet-title">班 級 點 名 表</div>
+        <div class="sheet-title">${sheetLabel.split('').join(' ')}</div>
         <div class="sheet-meta">
           <span>📅 民國 ${rocYear} 年 ${month} 月份</span>
           <span>👨‍🏫 ${className}</span>
@@ -621,6 +657,23 @@ function renderTable() {
   table.appendChild(tfoot);
 
   wrap.appendChild(table);
+
+  // Footer note bar
+  const noteText = document.getElementById('footerNote').value ||
+    '請假打 X　有到打 V　有吃晚餐請圈起來備註升級餐或一般餐';
+  const noteDiv = document.createElement('div');
+  noteDiv.className = 'sheet-footer-note';
+  noteDiv.textContent = '【說明】' + noteText;
+  wrap.appendChild(noteDiv);
+
+  // Remark section
+  const remarkLines = parseInt(document.getElementById('remarkLines').value) || 3;
+  const remarkDiv = document.createElement('div');
+  remarkDiv.className = 'sheet-remark';
+  remarkDiv.innerHTML = '<div class="sheet-remark-label">備　　註</div><div class="sheet-remark-lines">' +
+    Array(remarkLines).fill('<div class="sheet-remark-line"></div>').join('') + '</div>';
+  wrap.appendChild(remarkDiv);
+
   document.getElementById('mainArea').appendChild(wrap);
   updateCounts();
 }
