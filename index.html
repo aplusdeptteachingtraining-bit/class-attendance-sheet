@@ -12,7 +12,7 @@ body{font-family:'Noto Sans TC','Microsoft JhengHei',sans-serif;background:var(-
 header{background:var(--ink);color:#fff;padding:14px 22px;display:flex;align-items:center;gap:12px}
 header h1{font-size:16px;font-weight:700;letter-spacing:2px}
 header p{font-size:11px;color:#aac4df;margin-top:2px}
-.app{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 68px)}
+.app{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 68px)} @media(max-width:768px){.app{grid-template-columns:1fr} aside{border-right:none;border-bottom:1px solid #dde5ed;max-height:none}}
 aside{background:#fff;border-right:1px solid #dde5ed;padding:16px 14px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
 .pt{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase;padding-bottom:6px;border-bottom:1px solid #eee}
 .fg{display:flex;flex-direction:column;gap:4px}
@@ -434,7 +434,7 @@ function printPDF(){
   if(!sw){ alert('請先按「產生點名表」！'); return; }
 
   const btn = document.getElementById('pdfBtn');
-  const origText = btn.innerHTML;
+  const origHTML = btn.innerHTML;
   btn.textContent = '⏳ 產生中...';
   btn.disabled = true;
 
@@ -443,56 +443,58 @@ function printPDF(){
   const rocYear = document.getElementById('rocYear').value;
   const fileName = sheetLabel + '_' + rocYear + '年' + month + '月.pdf';
 
-  // Save original styles
   const origStyle = sw.getAttribute('style') || '';
-  sw.style.width = '1050px';
-  sw.style.minWidth = '1050px';
-  sw.style.boxShadow = 'none';
-  sw.style.border = 'none';
-  sw.style.padding = '20px';
-  sw.style.background = '#fff';
+  sw.style.cssText = 'width:1050px;min-width:1050px;box-shadow:none;border:none;padding:20px;background:#fff';
 
   setTimeout(()=>{
     html2canvas(sw, {
       scale: 2,
       useCORS: true,
       backgroundColor: '#ffffff',
-      logging: false,
-      onclone: (doc) => {
-        // Make sure cloned element is visible and sized correctly
-        const clonedSw = doc.getElementById('sheetWrapper');
-        if(clonedSw){
-          clonedSw.style.width = '1050px';
-          clonedSw.style.background = '#fff';
-        }
-      }
+      logging: false
     }).then(canvas => {
-      // Restore styles
       sw.setAttribute('style', origStyle);
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+      const pageW=297, pageH=210, margin=6;
+      const usableW=pageW-margin*2, usableH=pageH-margin*2;
+      const ratio = canvas.width/canvas.height;
+      let imgW=usableW, imgH=imgW/ratio;
+      if(imgH>usableH){ imgH=usableH; imgW=imgH*ratio; }
+      doc.addImage(canvas.toDataURL('image/jpeg',0.97),'JPEG',margin,margin,imgW,imgH);
 
-      const pageW = 297, pageH = 210, margin = 6;
-      const usableW = pageW - margin*2;
-      const usableH = pageH - margin*2;
+      // Detect mobile/tablet
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // Calculate image dimensions to fit A4
-      const canvasRatio = canvas.width / canvas.height;
-      let imgW = usableW;
-      let imgH = imgW / canvasRatio;
-      if(imgH > usableH){ imgH = usableH; imgW = imgH * canvasRatio; }
+      if(isMobile){
+        // Mobile: open PDF in new tab (user can long-press to save)
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        const newTab = window.open(url, '_blank');
+        if(!newTab){
+          // Fallback: use data URI download link
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(pdfBlob);
+          link.download = fileName;
+          link.click();
+        }
+        // Show instruction for mobile
+        setTimeout(()=>{
+          alert('📱 手機/平板儲存方式：\n\n已在新分頁開啟PDF\n請長按畫面 → 選「下載」或「儲存到檔案」\n\niOS：點右上角分享按鈕 → 「儲存到檔案」\nAndroid：長按 → 「下載連結」');
+        }, 500);
+      } else {
+        // Desktop: direct download
+        doc.save(fileName);
+      }
 
-      doc.addImage(canvas.toDataURL('image/jpeg', 0.97), 'JPEG', margin, margin, imgW, imgH);
-      doc.save(fileName);
-
-      btn.innerHTML = origText;
+      btn.innerHTML = origHTML;
       btn.disabled = false;
     }).catch(err => {
       sw.setAttribute('style', origStyle);
-      btn.innerHTML = origText;
+      btn.innerHTML = origHTML;
       btn.disabled = false;
-      alert('PDF產生失敗，請再試一次：' + err.message);
+      alert('PDF產生失敗，請再試一次');
     });
   }, 100);
 }
